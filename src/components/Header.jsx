@@ -6,7 +6,7 @@ export default function Header() {
           <span className="badge text-bg-dark rounded-pill px-3 py-2">
             This is a demo app
           </span>
-          <h1 className="display-6 fw-bold mt-3 mb-1">Todo Dashboard</h1>
+          <h1 className="display-6 fw-bold mt-3 mb-1">Todo Dashboard <v1 className="0"></v1></h1>
           <p className="text-secondary mb-0">
             
           </p>
