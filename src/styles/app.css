@@ -1,0 +1,20 @@
+.app-bg {
+  min-height: 100vh;
+  background:
+    radial-gradient(900px 450px at 10% 10%, rgba(255,255,255,0.18), transparent 55%),
+    radial-gradient(700px 450px at 90% 15%, rgba(255,255,255,0.14), transparent 50%),
+    linear-gradient(135deg, #0ea5e9 0%, #a855f7 45%, #fb7185 100%);
+}
+
+.card {
+  border-radius: 16px;
+}
+
+.list-group-item {
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+
+.list-group {
+  background: transparent;
+}
