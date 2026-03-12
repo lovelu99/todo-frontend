@@ -29,7 +29,7 @@ pipeline {
 
                         withSonarQubeEnv('sonarqube') {
                             sh """
-                                echo "Workspace: $(pwd)"
+                                echo "Workspace: \$(pwd)"
                                 ls -la
                                 echo "Scanner path: ${scannerHome}"
 
