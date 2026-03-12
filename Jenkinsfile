@@ -24,7 +24,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
                 steps {
-                    script {
+                    
                         def scannerHome = tool 'SonarScanner'
 
                         withSonarQubeEnv('sonarqube') {
@@ -43,7 +43,7 @@ pipeline {
                                 find . -name "report-task.txt" -o -path "*/.scannerwork/*" || true
                             """
                         }
-                    }
+                    
                 }
             }
         stage('Quality Gate'){
