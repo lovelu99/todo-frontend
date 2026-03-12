@@ -1,11 +1,16 @@
 pipeline {
     agent any
+     tools {
+        sonarQubeScanner 'sonarscanner'
+    }
+
     environment {
 
 
             GITOPS_DIR = 'gitops-repo'
             IMAGE_NAME       = "noakhali/todo-frontend"
-            IMAGE_TAG  = sh(script: 'git rev-parse --short=7 HEAD', returnStdout: true).trim()                       
+            IMAGE_TAG  = sh(script: 'git rev-parse --short=7 HEAD', returnStdout: true).trim()
+            SCANNER_HOME = tool 'sonarscanner'                       
             //GIT_SHA    = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
     }
      stages {
@@ -26,8 +31,8 @@ pipeline {
             steps {
                     withSonarQubeEnv('sonarqube') {
                         sh """
-                            def scannerHome = tool 'sonarscanner'
-                             ${scannerHome}/bin/sonar-scanner \
+                            
+                             ${SCANNER_HOME}/bin/sonar-scanner \
                             -Dsonar.projectKey=todo-frontend \
                             -Dsonar.projectName=todo-frontend \
                             -Dsonar.sources=. \
