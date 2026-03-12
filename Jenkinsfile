@@ -30,7 +30,6 @@ pipeline {
                           -Dsonar.projectKey=todo-frontend \
                           -Dsonar.projectName=todo-frontend \
                           -Dsonar.sources=. \
-                          -Dsonar.host.url=$SONAR_HOST_URL \
                           -Dsonar.token=$SONAR_AUTH_TOKEN
                     """
                 }
