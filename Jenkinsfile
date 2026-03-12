@@ -23,21 +23,29 @@ pipeline {
     //     }
 
         stage('SonarQube Analysis') {
-            steps {
-               withSonarQubeEnv('sonarqube') {
-                    sh """
-                        ${SCANNER_HOME}/bin/sonar-scanner \
-                          -Dsonar.projectKey=todo-frontend \
-                          -Dsonar.projectName=todo-frontend \
-                          -Dsonar.sources=. \
-                          -Dsonar.token=$SONAR_AUTH_TOKEN
-                    """
+                steps {
+                    script {
+                        def scannerHome = tool 'SonarScanner'
+
+                        withSonarQubeEnv('sonarqube') {
+                            sh """
+                                echo "Workspace: $(pwd)"
+                                ls -la
+                                echo "Scanner path: ${scannerHome}"
+
+                                ${scannerHome}/bin/sonar-scanner \
+                                -Dsonar.projectKey=todo-frontend \
+                                -Dsonar.projectName=todo-frontend \
+                                -Dsonar.sources=. \
+                                -Dsonar.token=${env.SONAR_AUTH_TOKEN}
+
+                                echo "After scan:"
+                                find . -name "report-task.txt" -o -path "*/.scannerwork/*" || true
+                            """
+                        }
+                    }
                 }
-
             }
-
-
-        }
         stage('Quality Gate'){
             steps {
                 sh 'echo " Quality Gate: Checking for code quality issues and vulnerabilities"'
