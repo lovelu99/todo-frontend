@@ -24,7 +24,16 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                sh 'echo "SonarQube Analysis"'
+               withSonarQubeEnv('sonarqube') {
+                    sh """
+                        ${SCANNER_HOME}/bin/sonar-scanner \
+                          -Dsonar.projectKey=todo-frontend \
+                          -Dsonar.projectName=todo-frontend \
+                          -Dsonar.sources=. \
+                          -Dsonar.host.url=$SONAR_HOST_URL \
+                          -Dsonar.token=$SONAR_AUTH_TOKEN
+                    """
+                }
 
             }
 
