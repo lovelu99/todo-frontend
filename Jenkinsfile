@@ -24,23 +24,13 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                script {
-                    def scannerHome = tool 'sonarscanner'
-
                     withSonarQubeEnv('sonarqube') {
                         sh """
-                            pwd
-                            ls -la
-                            echo "Scanner path: ${scannerHome}"
-
-                            ${scannerHome}/bin/sonar-scanner \
+                             ${SCANNER_HOME}/bin/sonar-scanner \
                             -Dsonar.projectKey=todo-frontend \
                             -Dsonar.projectName=todo-frontend \
                             -Dsonar.sources=. \
                             -Dsonar.token=${env.SONAR_AUTH_TOKEN}
-
-                            echo "After scan:"
-                            find . -name "report-task.txt" -o -path "*/.scannerwork/*" || true
                         """
                     }
                 }
