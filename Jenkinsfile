@@ -32,7 +32,7 @@ pipeline {
                             -Dsonar.sources=. \
                             -Dsonar.token=${env.SONAR_AUTH_TOKEN}
                         """
-                    }
+                    
                 }
             }
         }
