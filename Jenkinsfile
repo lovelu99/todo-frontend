@@ -26,7 +26,8 @@ pipeline {
             steps {
                     withSonarQubeEnv('sonarqube') {
                         sh """
-                             ${SCANNER_HOME}/bin/sonar-scanner \
+                            def scannerHome = tool 'sonarscanner'
+                             ${scannerHome}/bin/sonar-scanner \
                             -Dsonar.projectKey=todo-frontend \
                             -Dsonar.projectName=todo-frontend \
                             -Dsonar.sources=. \
