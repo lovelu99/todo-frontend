@@ -40,10 +40,11 @@ pipeline {
                 }
             }
         }
-        stage('Quality Gate'){
+        stage('Quality Gate') {
             steps {
-                sh 'echo " Quality Gate: Checking for code quality issues and vulnerabilities"'
-
+                timeout(time: 10, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
 
