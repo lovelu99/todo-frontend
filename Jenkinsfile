@@ -3,26 +3,11 @@ pipeline {
 
 
     environment {
-
-
             GITOPS_DIR = 'gitops-repo'
             IMAGE_NAME       = "noakhali/todo-frontend"
             IMAGE_TAG  = sh(script: 'git rev-parse --short=7 HEAD', returnStdout: true).trim()                       
-            //GIT_SHA    = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
     }
      stages {
-
-    //     stage('Set Variables'){
-    //         steps {
-    //             script {
-    //                 env.IMAGE_TAG  = sh(script: 'git rev-parse --short=7 HEAD', returnStdout: true).trim()
-    //                 // env.sourceSHA = sh(
-    //                 //         script: 'git rev-parse --short=7 HEAD^2 2>/dev/null || git rev-parse --short=7 HEAD',
-    //                 //         returnStdout: true
-    //                 //     ).trim()
-    //             }
-    //         }
-    //     }
 
         stage('SonarQube Analysis') {
             steps {
@@ -47,7 +32,34 @@ pipeline {
                 }
             }
         }
+        stage('Trivy File Scan') {
+            steps {
+                script {
+                    sh 'echo "Running Trivy file scan on the source code"'
+                    sh 'mkdir -p reports'
+                    def trivyStatus = sh (
+                        script: """
+                        trivy fs . \
+                        --scanners vuln \
+                        --severity HIGH,CRITICAL \
+                        --exit-code 1 \
+                        --ignore-unfixed \
+                        --format table \
+                        --output reports/trivy-file-scan.txt \
+                        --no-progress
+                        """,
+                        returnStatus: true
+                    )
+                    // archive report regardless of scan result
+                    archiveArtifacts artifacts: 'reports/*', fingerprint: true, allowEmptyArchive: true
 
+                    // fail pipeline if vulnerabilities detected
+                    if (trivyStatus != 0) {
+                        error("Trivy detected HIGH/CRITICAL vulnerabilities in source code. See the report in Jenkins artifacts.")
+                    }
+                }
+            }
+        }
         stage('Build and Push Docker Image'){
             when { branch 'develop'}
             steps {
@@ -56,16 +68,51 @@ pipeline {
                 echo 'Building tag and push Docker Image'
                 echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
                 docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                """  
+                }
+            }
+        }
+        stage('Trivy Image Scan') {
+            steps {
+                script {
+                    sh 'echo "Running Trivy scan on the Docker image"'
+                    sh 'mkdir -p reports'
+                    def trivyStatus = sh (
+                    script: """
+                    trivy image ${IMAGE_NAME}:${IMAGE_TAG} \
+                    --severity HIGH,CRITICAL \
+                    --exit-code 1 \
+                    --ignore-unfixed \
+                    --format table \
+                    --output reports/trivy-report.txt \
+                    --no-progress
+                    """,
+                    returnStatus: true
+                    )
+                    // archive report regardless of scan result
+                    archiveArtifacts artifacts: 'reports/*', fingerprint: true, allowEmptyArchive: true
+
+                    // fail pipeline if vulnerabilities detected
+                    if (trivyStatus != 0) {
+                        error("Trivy detected HIGH/CRITICAL vulnerabilities. See the report in Jenkins artifacts.")
+                    }
+                }
+            }
+        }
+
+        stage('Push Docker Image'){
+            when { branch 'develop'}
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                sh """
+                echo 'Pushing Docker Image'
+                echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
                 docker push ${IMAGE_NAME}:${IMAGE_TAG}
                 """  
                 }
             }
         }
-        stage('Trivy Scan') {
-            steps {
-                sh 'echo "Trivy Scan:- Scanning the Docker image for vulnerabilities"'
-            }
-        }
+
         stage('Test') {
             steps {
                 sh 'echo "Running tests11"'
