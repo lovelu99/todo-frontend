@@ -49,7 +49,34 @@ pipeline {
                 // }
             }
         }
+        stage('Trivy File Scan') {
+            steps {
+                script {
+                    sh 'echo "Running Trivy file scan on the source code"'
+                    sh 'mkdir -p reports'
+                    def trivyStatus = sh (
+                        script: """
+                        trivy fs . \
+                        --scanners vuln \
+                        --severity HIGH,CRITICAL \
+                        --exit-code 1 \
+                        --ignore-unfixed \
+                        --format table \
+                        --output reports/trivy-file-scan.txt \
+                        --no-progress
+                        """,
+                        returnStatus: true
+                    )
+                    // archive report regardless of scan result
+                    archiveArtifacts artifacts: 'reports/*', fingerprint: true, allowEmptyArchive: true
 
+                    // fail pipeline if vulnerabilities detected
+                    if (trivyStatus != 0) {
+                        error("Trivy detected HIGH/CRITICAL vulnerabilities in source code. See the report in Jenkins artifacts.")
+                    }
+                }
+            }
+        }
         stage('Build and Push Docker Image'){
             when { branch 'develop'}
             steps {
