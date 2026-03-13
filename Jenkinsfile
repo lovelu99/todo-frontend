@@ -3,50 +3,33 @@ pipeline {
 
 
     environment {
-
-
             GITOPS_DIR = 'gitops-repo'
             IMAGE_NAME       = "noakhali/todo-frontend"
             IMAGE_TAG  = sh(script: 'git rev-parse --short=7 HEAD', returnStdout: true).trim()                       
-            //GIT_SHA    = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
     }
      stages {
 
-    //     stage('Set Variables'){
-    //         steps {
-    //             script {
-    //                 env.IMAGE_TAG  = sh(script: 'git rev-parse --short=7 HEAD', returnStdout: true).trim()
-    //                 // env.sourceSHA = sh(
-    //                 //         script: 'git rev-parse --short=7 HEAD^2 2>/dev/null || git rev-parse --short=7 HEAD',
-    //                 //         returnStdout: true
-    //                 //     ).trim()
-    //             }
-    //         }
-    //     }
-
         stage('SonarQube Analysis') {
             steps {
-                sh 'echo "SonarQube analysis coming soon"'
-                //     script {
-                //     def scannerHome = tool 'sonarscanner'
-                //     withSonarQubeEnv('sonarqube') {                   
-                //     sh """
-                //         ${scannerHome}/bin/sonar-scanner \
-                //         -Dsonar.projectKey=todo-frontend \
-                //         -Dsonar.projectName=todo-frontend \
-                //         -Dsonar.sources=. \
-                //         -Dsonar.token=${env.SONAR_AUTH_TOKEN}
-                //     """
-                //     }
-                // }
+                    script {
+                    def scannerHome = tool 'sonarscanner'
+                    withSonarQubeEnv('sonarqube') {                   
+                    sh """
+                        ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectKey=todo-frontend \
+                        -Dsonar.projectName=todo-frontend \
+                        -Dsonar.sources=. \
+                        -Dsonar.token=${env.SONAR_AUTH_TOKEN}
+                    """
+                    }
+                }
             }
         }
         stage('Quality Gate') {
             steps {
-                sh 'echo "Quality Gate check coming soon"'
-                // timeout(time: 10, unit: 'MINUTES') {
-                //     waitForQualityGate abortPipeline: true
-                // }
+                timeout(time: 10, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
         stage('Trivy File Scan') {
