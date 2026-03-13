@@ -64,26 +64,28 @@ pipeline {
         }
         stage('Trivy Scan') {
             steps {
-                def trivyStatus = sh (
-                script: """
-                mkdir -p reports
-                echo 'Trivy Scan:- Scanning the Docker image for vulnerabilities'
-                trivy image ${IMAGE_NAME}:${IMAGE_TAG} \
-                --severity HIGH,CRITICAL \
-                --exit-code 1 \
-                --ignore-unfixed \
-                --format table \
-                --output reports/trivy-report.txt \
-                --no-progress
-                """,
-                returnStatus: true
-                )
-                // archive report regardless of scan result
-                archiveArtifacts artifacts: 'reports/*', fingerprint: true, allowEmptyArchive: true
+                script {
+                    sh 'echo "Running Trivy scan on the Docker image"'
+                    sh 'mkdir -p reports'
+                    def trivyStatus = sh (
+                    script: """
+                    trivy image ${IMAGE_NAME}:${IMAGE_TAG} \
+                    --severity HIGH,CRITICAL \
+                    --exit-code 1 \
+                    --ignore-unfixed \
+                    --format table \
+                    --output reports/trivy-report.txt \
+                    --no-progress
+                    """,
+                    returnStatus: true
+                    )
+                    // archive report regardless of scan result
+                    archiveArtifacts artifacts: 'reports/*', fingerprint: true, allowEmptyArchive: true
 
-                // fail pipeline if vulnerabilities detected
-                if (trivyStatus != 0) {
-                    error("Trivy detected HIGH/CRITICAL vulnerabilities. See the report in Jenkins artifacts.")
+                    // fail pipeline if vulnerabilities detected
+                    if (trivyStatus != 0) {
+                        error("Trivy detected HIGH/CRITICAL vulnerabilities. See the report in Jenkins artifacts.")
+                    }
                 }
             }
         }
