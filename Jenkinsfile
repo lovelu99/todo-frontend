@@ -89,7 +89,7 @@ pipeline {
                 }
             }
         }
-        stage('Trivy Scan') {
+        stage('Trivy Image Scan') {
             steps {
                 script {
                     sh 'echo "Running Trivy scan on the Docker image"'
