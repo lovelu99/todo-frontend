@@ -95,7 +95,7 @@ pipeline {
         stage('Deploy to Prod') {
             when {branch 'main'}
             steps {
-                //promotSameImagesDockerHub('prod')
+                input message: 'Deploy to production?', ok: 'Deploy'
                 script {
                 def devImageTag = getCurrentImageTag('staging','todo-frontend')
                 promotSameImagesDockerHub('prod', devImageTag)
