@@ -64,24 +64,30 @@ pipeline {
         }
         stage('Trivy Scan') {
             steps {
-                    sh """
-                    mkdir -p reports
-                    echo 'Trivy Scan:- Scanning the Docker image for vulnerabilities'
-                    trivy image ${IMAGE_NAME}:${IMAGE_TAG} \
-                    --severity HIGH,CRITICAL \
-                    --exit-code 1 \
-                    --ignore-unfixed \
-                    --format table \
-                    --output reports/trivy-report.txt \
-                    --no-progress
-                    """
+                def trivyStatus = sh (
+                script: """
+                mkdir -p reports
+                echo 'Trivy Scan:- Scanning the Docker image for vulnerabilities'
+                trivy image ${IMAGE_NAME}:${IMAGE_TAG} \
+                --severity HIGH,CRITICAL \
+                --exit-code 1 \
+                --ignore-unfixed \
+                --format table \
+                --output reports/trivy-report.txt \
+                --no-progress
+                """,
+                returnStatus: true
+                )
+                // archive report regardless of scan result
+                archiveArtifacts artifacts: 'reports/*', fingerprint: true, allowEmptyArchive: true
+
+                // fail pipeline if vulnerabilities detected
+                if (trivyStatus != 0) {
+                    error("Trivy detected HIGH/CRITICAL vulnerabilities. See the report in Jenkins artifacts.")
+                }
             }
         }
-        stage('Archive Trivy Report') {
-            steps {
-            archiveArtifacts artifacts: 'reports/*', fingerprint: true
-            }
-        }
+
         stage('Push Docker Image'){
             when { branch 'develop'}
             steps {
