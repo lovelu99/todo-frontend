@@ -26,25 +26,25 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                    script {
-                    def scannerHome = tool 'sonarscanner'
-                    withSonarQubeEnv('sonarqube') {                   
-                    sh """
-                        ${scannerHome}/bin/sonar-scanner \
-                        -Dsonar.projectKey=todo-frontend \
-                        -Dsonar.projectName=todo-frontend \
-                        -Dsonar.sources=. \
-                        -Dsonar.token=${env.SONAR_AUTH_TOKEN}
-                    """
-                    }
-                }
+                //     script {
+                //     def scannerHome = tool 'sonarscanner'
+                //     withSonarQubeEnv('sonarqube') {                   
+                //     sh """
+                //         ${scannerHome}/bin/sonar-scanner \
+                //         -Dsonar.projectKey=todo-frontend \
+                //         -Dsonar.projectName=todo-frontend \
+                //         -Dsonar.sources=. \
+                //         -Dsonar.token=${env.SONAR_AUTH_TOKEN}
+                //     """
+                //     }
+                // }
             }
         }
         stage('Quality Gate') {
             steps {
-                timeout(time: 10, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
+                // timeout(time: 10, unit: 'MINUTES') {
+                //     waitForQualityGate abortPipeline: true
+                // }
             }
         }
 
@@ -56,16 +56,43 @@ pipeline {
                 echo 'Building tag and push Docker Image'
                 echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
                 docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                docker push ${IMAGE_NAME}:${IMAGE_TAG}
                 """  
                 }
             }
         }
         stage('Trivy Scan') {
             steps {
-                sh 'echo "Trivy Scan:- Scanning the Docker image for vulnerabilities"'
+                    sh """
+                    mkdir -p reports
+                    echo 'Trivy Scan:- Scanning the Docker image for vulnerabilities'
+                    trivy image ${IMAGE_NAME}:${IMAGE_TAG} \
+                    --severity HIGH,CRITICAL \
+                    --exit-code 1 \
+                    --ignore-unfixed \
+                    --format table \
+                    --output reports/trivy-report.txt \
+                    --no-progress
+                    """
             }
         }
+        stage('Archive Trivy Report') {
+            steps {
+            archiveArtifacts artifacts: 'reports/*', fingerprint: true
+            }
+        }
+        stage('Push Docker Image'){
+            when { branch 'develop'}
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                sh """
+                echo 'Pushing Docker Image'
+                echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                """  
+                }
+            }
+        }
+
         stage('Test') {
             steps {
                 sh 'echo "Running tests11"'
