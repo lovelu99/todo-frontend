@@ -26,6 +26,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
+                sh 'echo "SonarQube analysis coming soon"'
                 //     script {
                 //     def scannerHome = tool 'sonarscanner'
                 //     withSonarQubeEnv('sonarqube') {                   
@@ -42,6 +43,7 @@ pipeline {
         }
         stage('Quality Gate') {
             steps {
+                sh 'echo "Quality Gate check coming soon"'
                 // timeout(time: 10, unit: 'MINUTES') {
                 //     waitForQualityGate abortPipeline: true
                 // }
